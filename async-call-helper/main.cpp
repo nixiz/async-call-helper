@@ -17,12 +17,12 @@ int main()
   //}
   //(void) getchar();
   std::cout << "will run safe service with same scenario\n\n";
+  do
   {
     safe_service s(5);
     s.execute();
     std::this_thread::sleep_for(1s);
-  }
+  } while(getchar() != 'q');
 
-  (void)getchar();
 	return 0;
 }

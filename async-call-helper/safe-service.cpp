@@ -11,6 +11,7 @@ safe_service::safe_service(int in_param)
 
 safe_service::~safe_service() {
   std::cout << "~dtor service \n";
+  set_deleted();
 }
 
 static inline void safe_response_cb(void* context, int out_param) {
