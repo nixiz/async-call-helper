@@ -38,8 +38,7 @@ struct asyn_call_token
 				return caller;
 			}
 
-
-			operator bool() const noexcept {
+			explicit operator bool() const noexcept {
 				return caller != nullptr;
 			}
 
