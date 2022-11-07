@@ -8,6 +8,7 @@
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include <functional>
 
 struct asyn_call_token
 {
@@ -69,8 +70,64 @@ public:
 		};
 		return new special_token(weak_ref(), guard);
 	}
+	template <typename ...Args>
+	struct callback_context {
+		void *context;
+		void (*callback)(Args...);
+		void operator()(Args... args) noexcept {
+			std::invoke(callback, std::forward<Args>(args)...);
+		}
+	};
+
+	template <typename ...Args, typename Fn>
+	callback_context<void*, Args...> 
+	get_context(Fn&& cb) noexcept 
+	{
+		struct trampoline_t final
+			: public asyn_call_token
+		{
+			trampoline_t(std::weak_ptr<auto_ref_holder> ref_, 
+						 std::mutex& guard_,
+						 std::function<void(Args...)> callback_) 
+				: ref(ref_) 
+				, guard(guard_, std::defer_lock)
+				, callback(std::move(callback_)) {}
+			
+			~trampoline_t() {
+				if (guard) {
+					guard.unlock();
+				}
+			}
+
+			void* get_caller() override {
+				guard.lock();
+				auto sref = ref.lock();
+				// at this pointer either we have 
+				// the parent[ThisType] pointer or nullptr so we can safely operate over the pointer
+				return (sref) ? sref->get_parent() : nullptr;
+			}
+
+			static inline void callback_handle(void* context, Args... args) {
+				std::unique_ptr<trampoline_t> trampoline_ptr(reinterpret_cast<trampoline_t*>(context));
+				if (!trampoline_ptr) return;
+  			if (trampoline_ptr->get_caller()) {
+					std::invoke(trampoline_ptr->callback, std::forward<Args>(args)...);
+				}
+			}
+		private:
+			std::weak_ptr<auto_ref_holder> ref;
+			std::unique_lock<std::mutex> guard;
+			std::function<void(Args...)> callback;
+		};
+		std::function<void(Args...)> callback = cb;
+		return callback_context<void*, Args...> {
+			new trampoline_t(weak_ref(), guard, std::move(callback)),
+			&trampoline_t::callback_handle
+		};
+	}
 
 protected:
+
 	Caller* parent() {
 		return static_cast<Caller*>(this);
 	}
