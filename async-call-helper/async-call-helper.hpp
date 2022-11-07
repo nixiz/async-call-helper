@@ -14,41 +14,12 @@ struct asyn_call_token
 	virtual ~asyn_call_token() = default;
 
 	template <typename Cast>
-	static inline auto from_context(void* context) noexcept
+	static inline Cast* from_context(void* context) noexcept
 	{
-		struct token_handler {
-			explicit token_handler(asyn_call_token* act_handle_)
-				: act_handle(act_handle_) {
-				caller = static_cast<Cast*>(act_handle->get_caller());
-			}
-
-			Cast& operator*() noexcept {
-				return *caller;
-			}
-
-			const Cast& operator*() const noexcept {
-				return *caller;
-			}
-
-			Cast* operator->() noexcept {
-				return caller;
-			}
-
-			const Cast* operator->() const noexcept {
-				return caller;
-			}
-
-			explicit operator bool() const noexcept {
-				return caller != nullptr;
-			}
-
-		private:
-			std::unique_ptr<asyn_call_token> act_handle;
-			Cast* caller;
-		};
-
-		//auto cast_ptr = static_cast<Cast*>(token->get_caller());
-		return token_handler{ reinterpret_cast<asyn_call_token*>(context) };
+		std::unique_ptr<asyn_call_token> act_handle(reinterpret_cast<asyn_call_token*>(context));
+		if (!act_handle) return nullptr;
+		auto *cast_ptr = static_cast<Cast*>(act_handle->get_caller());
+		return cast_ptr;
 	}
 protected:
 	virtual void* get_caller() = 0;
@@ -60,20 +31,16 @@ class async_call_helper
 {
 public:
 	using ThisType = typename async_call_helper<Caller, IFaces...>;
-	using IFaces::IFaces...;
+	// using IFaces::IFaces...;
 
 	async_call_helper() 
 		: IFaces()... 
 	{
 		lifetime_ref = std::make_shared<auto_ref_holder>(*this);
 	}
-	~async_call_helper() 
-	{
+	~async_call_helper() = default;
 
-	}
-
-
-	asyn_call_token* get_context()
+	void* get_context() const noexcept
 	{
 		struct special_token final
 			: public asyn_call_token
@@ -113,7 +80,7 @@ protected:
 	}
 
 	void set_deleted() noexcept {
-		std::lock_guard lock(guard);
+		std::lock_guard<std::mutex> lock(guard);
 		lifetime_ref.reset();
 	}
 
@@ -145,7 +112,7 @@ private:
 	}
 
 	std::shared_ptr<auto_ref_holder> lifetime_ref;
-	std::mutex guard;
+	mutable std::mutex guard;
 };
 
 

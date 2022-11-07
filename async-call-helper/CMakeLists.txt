@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 3.8)
 add_executable (async-call-helper  "async-call-helper.hpp" "main.cpp" "external_c_lib.h" "unsafe-service.h" "unsafe-service.cpp" "safe-service.h" "safe-service.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET async-call-helper PROPERTY CXX_STANDARD 20)
+  set_property(TARGET async-call-helper PROPERTY CXX_STANDARD 17)
 endif()
 
 # TODO: Add tests and install targets if needed.
