@@ -4,10 +4,10 @@
 #include <functional>
 #include <thread>
 
-namespace c {
+namespace {
 typedef void (*long_async_function_cb)(void*, int);
 
-static void long_async_function(void* context,
+static void c_long_async_function(void* context,
                                 long_async_function_cb cb,
                                 int in_param,
                                 int sleep_msec = 1000) {

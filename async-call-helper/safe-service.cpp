@@ -30,7 +30,7 @@ void safe_service::execute() {
 
   using namespace std::placeholders;
   auto context_bind = get_context<int>(std::bind(&safe_service::response, this, _1));
-  c::long_async_function(context_bind.context, context_bind.callback, *param * 3);
+  c_long_async_function(context_bind.context, context_bind.callback, *param * 3);
 
   cpp::long_async_function(context_bind, *param);
 }

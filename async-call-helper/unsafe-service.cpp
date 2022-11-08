@@ -18,7 +18,7 @@ static inline void response_cb(void* context, int out_param) {
 }
 
 void unsafe_service::execute() {
-  c::long_async_function((void*)this, response_cb, *param);
+  c_long_async_function((void*)this, response_cb, *param);
 }
 
 void unsafe_service::response(int out_param)

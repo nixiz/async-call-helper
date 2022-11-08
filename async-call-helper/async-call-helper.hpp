@@ -31,15 +31,15 @@ class async_call_helper
 	: public IFaces...
 {
 public:
-	using ThisType = typename async_call_helper<Caller, IFaces...>;
+	using ThisType = async_call_helper<Caller, IFaces...>;
 	// using IFaces::IFaces...;
-
+	~async_call_helper() = default;
+protected:
 	async_call_helper() 
 		: IFaces()... 
 	{
 		lifetime_ref = std::make_shared<auto_ref_holder>(*this);
 	}
-	~async_call_helper() = default;
 
 	void* get_context() const noexcept
 	{
