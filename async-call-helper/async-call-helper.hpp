@@ -73,14 +73,14 @@ public:
 	template <typename ...Args>
 	struct callback_context {
 		void *context;
-		void (*callback)(Args...);
+		void (*callback)(void*, Args...);
 		void operator()(Args... args) noexcept {
-			std::invoke(callback, std::forward<Args>(args)...);
+			std::invoke(callback, context, std::forward<Args>(args)...);
 		}
 	};
 
 	template <typename ...Args, typename Fn>
-	callback_context<void*, Args...> 
+	callback_context<Args...> 
 	get_context(Fn&& cb) noexcept 
 	{
 		struct trampoline_t final
@@ -120,7 +120,7 @@ public:
 			std::function<void(Args...)> callback;
 		};
 		std::function<void(Args...)> callback = cb;
-		return callback_context<void*, Args...> {
+		return callback_context<Args...> {
 			new trampoline_t(weak_ref(), guard, std::move(callback)),
 			&trampoline_t::callback_handle
 		};

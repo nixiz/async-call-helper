@@ -21,7 +21,7 @@ int main()
   {
     safe_service s(5);
     s.execute();
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(3s);
   } while(getchar() != 'q');
 
 	return 0;
