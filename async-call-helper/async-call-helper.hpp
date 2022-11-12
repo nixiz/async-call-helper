@@ -38,7 +38,7 @@ protected:
 	async_call_helper() 
 		: IFaces()... 
 	{
-		lifetime_ref = std::make_shared<auto_ref_holder>(*this);
+		lifetime_ref = std::make_shared<auto_ref_holder>(parent());
 	}
 
 	void* get_context() const noexcept
@@ -144,20 +144,12 @@ protected:
 private:
 	friend struct auto_ref_holder;
 	struct auto_ref_holder	
-		: public std::enable_shared_from_this<auto_ref_holder>
-	{
-		explicit auto_ref_holder(ThisType& parent) 
-			: ref(parent) {}
-
-		Caller* get_parent() {
-			return ref.parent();
-		}
-
-		const Caller* get_parent() const {
-			return ref.parent();
-		}
+		: public std::enable_shared_from_this<auto_ref_holder> {
+		explicit auto_ref_holder(Caller* caller_) : caller(caller_) {}
+		Caller* get_parent() {return caller;}
+		const Caller* get_parent() const {return caller;}
 	private:
-		ThisType& ref;
+		Caller* caller;
 	};
 
 	std::weak_ptr<auto_ref_holder> weak_ref() noexcept {
