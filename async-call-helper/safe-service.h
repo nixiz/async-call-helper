@@ -3,7 +3,7 @@
 #include "async-call-helper.hpp"
 
 class safe_service 
-  : public async_call_helper<safe_service>
+  : public async_call_helper<safe_service, multi_thread_usage>
 {
 public:
   explicit safe_service(int in_param);

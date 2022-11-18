@@ -10,6 +10,24 @@
 #include <mutex>
 #include <functional>
 
+// async function callback support for single threaded environments.
+// can be use only if async calls has sharing same thread with caller instance
+struct single_thread_usage {};
+
+// in case if async call executing from another thread,
+// the destruction of caller and async callback function execution can run
+// at the same time, this policy must be using for thread safety
+struct multi_thread_usage {};
+
+// trait struct for the usage of threading policy
+template <typename thread_support_t>
+struct thread_support_traits { 
+	// should have type definitions described below
+	// typedef mutex_type
+	// typedef lock_guard_t
+	// typedef unique_lock_t
+};
+
 struct asyn_call_token
 {
 	virtual ~asyn_call_token() = default;
@@ -26,18 +44,14 @@ protected:
 	virtual void* get_caller() = 0;
 };
 
-template <typename Caller, typename ...IFaces>
-class async_call_helper 
-	: public IFaces...
+template <typename Caller, typename thread_support_t = single_thread_usage>
+class async_call_helper
 {
 public:
-	using ThisType = async_call_helper<Caller, IFaces...>;
-	// using IFaces::IFaces...;
+	using ThisType = async_call_helper<Caller, thread_support_t>;
 	~async_call_helper() = default;
 protected:
-	async_call_helper() 
-		: IFaces()... 
-	{
+	async_call_helper() {
 		lifetime_ref = std::make_shared<auto_ref_holder>(parent());
 	}
 
@@ -46,7 +60,7 @@ protected:
 		struct special_token final
 			: public asyn_call_token
 		{
-			special_token(std::weak_ptr<auto_ref_holder> ref_, std::mutex& guard_) 
+			special_token(std::weak_ptr<auto_ref_holder> ref_, thread_support_traits<thread_support_t>::mutex_type& guard_) 
 				: ref(ref_) 
 				, guard(guard_, std::defer_lock) {}
 			
@@ -66,7 +80,7 @@ protected:
 			}
 		private:
 			std::weak_ptr<auto_ref_holder> ref;
-			std::unique_lock<std::mutex> guard;
+			typename thread_support_traits<thread_support_t>::unique_lock_t guard;
 		};
 		return new special_token(weak_ref(), guard);
 	}
@@ -87,7 +101,7 @@ protected:
 			: public asyn_call_token
 		{
 			trampoline_t(std::weak_ptr<auto_ref_holder> ref_, 
-						 std::mutex& guard_,
+						 thread_support_traits<thread_support_t>::mutex_type& guard_,
 						 std::function<void(Args...)> callback_) 
 				: ref(ref_) 
 				, guard(guard_, std::defer_lock)
@@ -116,7 +130,7 @@ protected:
 			}
 		private:
 			std::weak_ptr<auto_ref_holder> ref;
-			std::unique_lock<std::mutex> guard;
+			typename thread_support_traits<thread_support_t>::unique_lock_t guard;
 			std::function<void(Args...)> callback;
 		};
 		std::function<void(Args...)> callback = cb;
@@ -137,7 +151,7 @@ protected:
 	}
 
 	void set_deleted() noexcept {
-		std::lock_guard<std::mutex> lock(guard);
+		thread_support_traits<thread_support_t>::lock_guard_t lock(guard);
 		lifetime_ref.reset();
 	}
 
@@ -160,7 +174,29 @@ private:
 	}
 
 	std::shared_ptr<auto_ref_holder> lifetime_ref;
-	mutable std::mutex guard;
+	mutable typename thread_support_traits<thread_support_t>::mutex_type guard;
 };
 
+template <>
+struct thread_support_traits<single_thread_usage> {
+	struct dummy_mutex {};
+	using mutex_type = dummy_mutex;
+	struct dummy_locker {
+		explicit dummy_locker(mutex_type&) {}
+		dummy_locker(mutex_type&, std::adopt_lock_t) {}
+		dummy_locker(mutex_type&, std::defer_lock_t) {}
+		dummy_locker(mutex_type&, std::try_to_lock_t) {}
+		explicit operator bool() const noexcept { return false; }
+		void lock() {}
+		void unlock() {}
+	};
+	using lock_guard_t = dummy_locker;
+	using unique_lock_t = dummy_locker;
+};
 
+template <>
+struct thread_support_traits<multi_thread_usage> {
+	using mutex_type = std::mutex;
+	using lock_guard_t = std::lock_guard<mutex_type>;
+	using unique_lock_t = std::unique_lock<mutex_type>;
+};
