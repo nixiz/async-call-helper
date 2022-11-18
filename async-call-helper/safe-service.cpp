@@ -32,7 +32,7 @@ void safe_service::execute() {
   auto context_bind = get_context<int>(std::bind(&safe_service::response, this, _1));
   c_long_async_function(context_bind.context, context_bind.callback, *param * 3);
 
-  cpp::long_async_function(context_bind, *param);
+  //cpp::long_async_function(context_bind, *param);
 }
 
 void safe_service::response(int out_param) {

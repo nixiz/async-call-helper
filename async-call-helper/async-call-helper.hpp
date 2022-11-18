@@ -143,8 +143,7 @@ protected:
 
 private:
 	friend struct auto_ref_holder;
-	struct auto_ref_holder	
-		: public std::enable_shared_from_this<auto_ref_holder> {
+	struct auto_ref_holder {
 		explicit auto_ref_holder(Caller* caller_) : caller(caller_) {}
 		Caller* get_parent() {return caller;}
 		const Caller* get_parent() const {return caller;}
