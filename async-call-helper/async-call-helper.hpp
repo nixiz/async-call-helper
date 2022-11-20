@@ -60,7 +60,8 @@ protected:
 		struct special_token final
 			: public asyn_call_token
 		{
-			special_token(std::weak_ptr<auto_ref_holder> ref_, thread_support_traits<thread_support_t>::mutex_type& guard_) 
+			using mutex_t = typename thread_support_traits<thread_support_t>::mutex_type;
+			special_token(std::weak_ptr<auto_ref_holder> ref_, mutex_t& guard_) 
 				: ref(ref_) 
 				, guard(guard_, std::defer_lock) {}
 			
@@ -100,8 +101,9 @@ protected:
 		struct trampoline_t final
 			: public asyn_call_token
 		{
+			using mutex_t = typename thread_support_traits<thread_support_t>::mutex_type;
 			trampoline_t(std::weak_ptr<auto_ref_holder> ref_, 
-						 thread_support_traits<thread_support_t>::mutex_type& guard_,
+						 mutex_t& guard_,
 						 std::function<void(Args...)> callback_) 
 				: ref(ref_) 
 				, guard(guard_, std::defer_lock)
@@ -151,7 +153,8 @@ protected:
 	}
 
 	void set_deleted() noexcept {
-		thread_support_traits<thread_support_t>::lock_guard_t lock(guard);
+		using lock_guard_t = typename thread_support_traits<thread_support_t>::lock_guard_t;
+		lock_guard_t lock(guard);
 		lifetime_ref.reset();
 	}
 
