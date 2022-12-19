@@ -23,5 +23,5 @@ void unsafe_service::execute() {
 
 void unsafe_service::response(int out_param)
 {
-  std::cout << "received response for " << *param << ": " << out_param << "\n";
+  std::cout << "received response. this->param: " << *param << "\n";
 }

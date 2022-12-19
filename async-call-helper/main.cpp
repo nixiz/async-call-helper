@@ -9,20 +9,20 @@ using namespace std::chrono_literals;
 
 int main()
 {
-  //std::cout << "will run unsafe service\n";
-  //{
-  //  unsafe_service s(5);
-  //  s.execute();
-  //  std::this_thread::sleep_for(1s);
-  //}
-  //(void) getchar();
-  std::cout << "will run safe service with same scenario\n\n";
+#if 1
+  {
+   unsafe_service s(5);
+   s.execute();
+   std::this_thread::sleep_for(1s);
+  }
+  (void) getchar();
+#else
   do
   {
     safe_service s(5);
     s.execute();
     std::this_thread::sleep_for(3s);
   } while(getchar() != 'q');
-
+#endif
 	return 0;
 }
