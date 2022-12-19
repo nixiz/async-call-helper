@@ -13,6 +13,7 @@ unsafe_service::~unsafe_service() {
 }
 
 static inline void response_cb(void* context, int out_param) {
+  std::cout << "response_cb\n";
   auto srv_ptr = static_cast<unsafe_service*>(context);
   srv_ptr->response(out_param);
 }
@@ -23,5 +24,6 @@ void unsafe_service::execute() {
 
 void unsafe_service::response(int out_param)
 {
+  std::cout << "response\n";
   std::cout << "received response. this->param: " << *param << "\n";
 }

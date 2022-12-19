@@ -7,22 +7,21 @@
 
 using namespace std::chrono_literals;
 
-int main()
+int main(int argc, const char*[])
 {
-#if 1
+  bool run_unsafe = argc == 1;
+  if (run_unsafe)
   {
    unsafe_service s(5);
    s.execute();
    std::this_thread::sleep_for(1s);
   }
-  (void) getchar();
-#else
-  do
+  else 
   {
     safe_service s(5);
     s.execute();
-    std::this_thread::sleep_for(3s);
-  } while(getchar() != 'q');
-#endif
+    std::this_thread::sleep_for(1s);
+  }
+  (void)getchar();
 	return 0;
 }
