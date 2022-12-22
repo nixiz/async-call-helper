@@ -38,7 +38,7 @@ void safe_service::execute_cpp_bind()
 {
   using namespace std::placeholders;
   auto context_bind = get_context<int>(std::bind(&safe_service::response, this, _1));
-  c_long_async_function(context_bind.context, context_bind.callback, *param * 3);
+  c_long_async_function(context_bind.context, context_bind.callback, *param);
 }
 
 void safe_service::response(int out_param) {
@@ -48,7 +48,7 @@ void safe_service::response(int out_param) {
 
 void safe_service::execute() 
 {
-  constexpr const auto cb_type = cb_type_e::c_style;
+  constexpr const auto cb_type = cb_type_e::cpp_lambda;
   switch (cb_type)
   {
   case cb_type_e::c_style:      execute_c_style();    break;
